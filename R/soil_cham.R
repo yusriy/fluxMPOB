@@ -39,9 +39,12 @@ soil_chamber$ObsDateTime <- strptime(soil_chamber$ObsDateTime,
 
 ## 4. CO2 soil flux estimated using exponential fit [umol m-2 s-1]
 # Already in numeric
-
+# Need to remove 0 values from samplers other than soil chamber
+soil_chamber$Exp_Flux[which(soil_chamber$Exp_Flux == 0.00)] <- NA
 ## 5. CO2 soil flux estimated using linear fit [umol m-2 s-1]
 # Already in numeric
+# Need to remove 0 values from samplers other than soil chamber
+soil_chamber$Lin_Flux[which(soil_chamber$Lin_Flux == 0.00)] <- NA
 
 ## 6. Curve fit status, either linear or exponential
 # Already in factor but need to exchange the " " with NA
