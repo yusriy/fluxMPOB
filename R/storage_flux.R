@@ -12,7 +12,7 @@
 ####################################################################
 
 #### 1. Preliminaries ####
-source('R/trapezium_intg.R') # To calculate storage using the trapezium rule
+source('R/tool_trapezium_intg.R') # To calculate storage using the trapezium rule
 
 #### 2. Data import ####
 
