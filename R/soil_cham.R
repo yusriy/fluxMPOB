@@ -30,7 +30,7 @@ df_soil <- read.csv(file.choose(),header = TRUE)
 # 7. Profile3 - 10 m (height above ground); not used - PORT 7
 # 8. Profile4 - 2 m (height above ground); not used - PORT 8
 
-## 2. Port - need to changer to factor
+## 2. Port - need to change to factor
 df_soil$Port. <- as.factor(df_soil$Port.)
 
 ## 3. Date - need to change to POSIXct - Singapore Time (SGT)
