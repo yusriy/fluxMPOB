@@ -7,7 +7,7 @@
 # Note: 
 #     1. For EC 'full output' results only and the data
 #     must be in CSV format
-# 
+#     2. When prompted, import EC data first then Biomet data
 ####################################################################
 
 ##### 0. Preliminaries ####################################
@@ -52,8 +52,6 @@ df_biomet <- charactersNumeric(df_biomet)
 df_biomet <- df_biomet[,c(-1,-2)]
 # Combine time_stamp with biomet data
 df_biomet <- cbind(time_stamp, df_biomet)
-
-
 
 # Define the header names of the dataframes
 h_names <- c("time_stamp",
@@ -177,6 +175,30 @@ df_EC <- proc_dat2(df_EC,h_names)
 
 # Combine EC and biomet data. Must have the same number of rows
 df_EC <- cbind(df_EC,df_biomet)
+
+#### Exploratory plots ###################################
+
+# Plot CO2 flux with time stamp
+plot(df_EC$time_stamp,df_EC$co2_flux,pch=19)
+# Overlay QC=2 (bad quality) on top of plot
+points(df_EC$time_stamp[which(df_EC$qc_co2_flux==2)],
+       df_EC$co2_flux[which(df_EC$qc_co2_flux==2)],pch=19,col='red')
+
+# Plot LE (latent heat flux) with time stamp
+plot(df_EC$time_stamp,df_EC$LE,pch=19)
+# Overlay QC=2 (bad quality) on top of plot
+points(df_EC$time_stamp[which(df_EC$qc_LE==2)],
+       df_EC$LE[which(df_EC$qc_LE==2)],pch=19,col='red')
+
+# Plot H (sensible heat flux) with time stamp
+plot(df_EC$time_stamp,df_EC$H,pch=19)
+# Overlay QC=2 (bad quality) on top of plot
+points(df_EC$time_stamp[which(df_EC$qc_H==2)],
+       df_EC$H[which(df_EC$qc_H==2)],pch=19,col='red')
+
+
+##### Export data ########################################
+write.table(df_EC,'df_EC.csv',sep=',')
 
 ##### Cleaning up ########################################
 # Remove temporary variables
