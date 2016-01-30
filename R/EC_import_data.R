@@ -1,17 +1,15 @@
-##########################################################
-# TITLE: Import and analyses of EC and Biomet data
+#### TITLE: Import and analyses of EC and Biomet data ####
 # AUTHOR: Yusri Yusup, PhD
 # AFFILIATION: Universiti Sains Malaysia
 # DATE: 2016-01-04
 # 
-# Note: 
+# Notes: 
 #     1. For EC 'full output' results only and the data
 #     must be in CSV format
 #     2. When prompted, import EC data first then Biomet data
 #     3. Check whether temperature data (Ts_1_1_1 and Ta_1_1_1, etc)
 #     are in C or K, the calculations that follow assume the temperatures 
 #     are in K.
-####################################################################
 
 ##### 0. Preliminaries ####################################
 ## Initial analyses setup
@@ -59,7 +57,7 @@ df_biomet <- df_biomet[,c(-1,-2)]
 # Combine time_stamp with biomet data
 df_biomet <- cbind(time_stamp, df_biomet)
 
-# Define the header names of the dataframes
+#### 1.1 Define the header names of the dataframes ####
 h_names <- c("time_stamp",
              "daytime",
              "file_records",
@@ -182,7 +180,9 @@ df_EC <- proc_dat2(df_EC,h_names)
 # Combine EC and biomet data. Must have the same number of rows
 df_EC <- cbind(df_EC,df_biomet)
 
-#### Convert Biomet temperature to C from K ##########################
+#### 2. Some parameters calculations #################################
+
+## 2.1 Convert Biomet temperature to C from K ####
 
 # Air temperature
 df_EC$Ta_1_1_1 <- df_EC$Ta_1_1_1 - 273.15
@@ -194,14 +194,11 @@ df_EC$Ta_5_1_1 <- df_EC$Ta_5_1_1 - 273.15
 df_EC$Ts_1_1_1 <- df_EC$Ts_1_1_1 - 273.15
 df_EC$Ts_2_1_1 <- df_EC$Ts_2_1_1 - 273.15
 df_EC$Ts_3_1_1 <- df_EC$Ts_3_1_1 - 273.15
-
-
-#### Calculating storage H in canopy #################################
+## 2.2 Calculating storage H in canopy ####
 
 # Note: 5 heights are used here unlike in James' (LI-COR) script which uses
 # only 4 heights
 heights <- c(2,5,10,15,30.65) #Levels 1: 2 m, 2: 5 m, 3: 10 m, 4: 15 m, 5: 30.65 m
-
 
 # Calculating rho * cp for each level
 rhocp1 <- rho_cp(df_EC$RH_1_1_1,df_EC$Ta_1_1_1,df_EC$air_pressure)
@@ -258,8 +255,7 @@ df_EC <- cbind(df_EC,H_stor)
 rm(rho_cp_dT1,rho_cp_dT2,rho_cp_dT3,rho_cp_dT4,
    rho_cp_dT5,rhocp1,rhocp2,rhocp3,
    rhocp4,rhocp5,H_stor)
-
-#### Calculating storage LE in canopy ####
+## 2.3 Calculating storage LE in canopy ####
 # Storage calculations are based on the Finnigan (2006) paper
 # Calculating absolute humidity from RH
 # Level 1, 2 m
