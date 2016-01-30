@@ -8,6 +8,9 @@
 #     1. For EC 'full output' results only and the data
 #     must be in CSV format
 #     2. When prompted, import EC data first then Biomet data
+#     3. Check whether temperature data (Ts_1_1_1 and Ta_1_1_1, etc)
+#     are in C or K, the calculations that follow assume the temperatures 
+#     are in K.
 ####################################################################
 
 ##### 0. Preliminaries ####################################
