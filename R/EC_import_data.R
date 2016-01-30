@@ -23,6 +23,9 @@ source('R/tool_convert_magic_num.R')
 source('R/tool_proc_dat2.R')
 source('R/tool_charactersNumeric.R')
 source('R/tool_asNumeric.R')
+source('R/tool_rho_cp.R') # To calculate rho_cp for H storage
+source('R/tool_trapezium_intg.R') # To calculate storage using the trapezium rule
+source('R/tool_abs_humidity.R') # To calculate abs humidity from RH for LE storage
 
 ##### 1. Data import #####################################################
 
@@ -175,6 +178,169 @@ df_EC <- proc_dat2(df_EC,h_names)
 
 # Combine EC and biomet data. Must have the same number of rows
 df_EC <- cbind(df_EC,df_biomet)
+
+#### Convert Biomet temperature to C from K ##########################
+
+# Air temperature
+df_EC$Ta_1_1_1 <- df_EC$Ta_1_1_1 - 273.15
+df_EC$Ta_2_1_1 <- df_EC$Ta_2_1_1 - 273.15
+df_EC$Ta_3_1_1 <- df_EC$Ta_3_1_1 - 273.15
+df_EC$Ta_4_1_1 <- df_EC$Ta_4_1_1 - 273.15
+df_EC$Ta_5_1_1 <- df_EC$Ta_5_1_1 - 273.15
+# Soil temperature
+df_EC$Ts_1_1_1 <- df_EC$Ts_1_1_1 - 273.15
+df_EC$Ts_2_1_1 <- df_EC$Ts_2_1_1 - 273.15
+df_EC$Ts_3_1_1 <- df_EC$Ts_3_1_1 - 273.15
+
+
+#### Calculating storage H in canopy #################################
+
+# Note: 5 heights are used here unlike in James' (LI-COR) script which uses
+# only 4 heights
+heights <- c(2,5,10,15,30.65) #Levels 1: 2 m, 2: 5 m, 3: 10 m, 4: 15 m, 5: 30.65 m
+
+
+# Calculating rho * cp for each level
+rhocp1 <- rho_cp(df_EC$RH_1_1_1,df_EC$Ta_1_1_1,df_EC$air_pressure)
+rhocp2 <- rho_cp(df_EC$RH_2_1_1,df_EC$Ta_2_1_1,df_EC$air_pressure)
+rhocp3 <- rho_cp(df_EC$RH_3_1_1,df_EC$Ta_3_1_1,df_EC$air_pressure)
+rhocp4 <- rho_cp(df_EC$RH_4_1_1,df_EC$Ta_4_1_1,df_EC$air_pressure)
+rhocp5 <- rho_cp(df_EC$RH_5_1_1,df_EC$Ta_5_1_1,df_EC$air_pressure)
+
+# Calculating the difference of rho * c_p * (T2 - T1) in time
+# Level 1, 2 m
+rho_cp_dT1 <- numeric()
+for (i in 1:length(rhocp1)){
+  rho_cp_dT1[i] <- ((rhocp1[i]*df_EC$Ta_1_1_1[i]) - 
+                      (rhocp1[i-1]*df_EC$Ta_1_1_1[i-1]))/(30 * 60)
+}
+# Level 2, 5 m
+rho_cp_dT2 <- numeric()
+for (i in 1:length(rhocp2)){
+  rho_cp_dT2[i] <- ((rhocp2[i]*df_EC$Ta_2_1_1[i]) - 
+                      (rhocp2[i-1]*df_EC$Ta_2_1_1[i-1]))/(30 * 60)
+}
+
+# Level 3, 10 m
+rho_cp_dT3 <- numeric()
+for (i in 1:length(rhocp3)){
+  rho_cp_dT3[i] <- ((rhocp3[i]*df_EC$Ta_3_1_1[i]) - 
+                      (rhocp3[i-1]*df_EC$Ta_3_1_1[i-1]))/(30 * 60)
+}
+
+# Level 4, 15 m
+rho_cp_dT4 <- numeric()
+for (i in 1:length(rhocp4)){
+  rho_cp_dT4[i] <- ((rhocp4[i]*df_EC$Ta_4_1_1[i]) - 
+                      (rhocp4[i-1]*df_EC$Ta_4_1_1[i-1]))/(30 * 60)
+}
+
+# Level 5, 30.65 or 30 m
+rho_cp_dT5 <- numeric()
+for (i in 1:length(rhocp5)){
+  rho_cp_dT5[i] <- ((rhocp5[i]*df_EC$Ta_5_1_1[i]) - 
+                      (rhocp5[i-1]*df_EC$Ta_5_1_1[i-1]))/(30 * 60)
+}
+
+# Integrating using the trapezium area rule
+H_stor <- numeric()
+for (i in 1:nrow(df_EC)){
+  H_stor[i] <- trapezium_intg(heights,rho_cp_dT1[i],rho_cp_dT2[i],rho_cp_dT3[i],
+                              rho_cp_dT4[i],rho_cp_dT5[i])
+}
+
+# Adding to df_EC
+df_EC <- cbind(df_EC,H_stor)
+
+rm(rho_cp_dT1,rho_cp_dT2,rho_cp_dT3,rho_cp_dT4,
+   rho_cp_dT5,rhocp1,rhocp2,rhocp3,
+   rhocp4,rhocp5,H_stor)
+
+#### Calculating storage LE in canopy ####
+# Storage calculations are based on the Finnigan (2006) paper
+# Calculating absolute humidity from RH
+# Level 1, 2 m
+hum1 <- numeric()
+for (i in 1:nrow(df_EC)){
+  hum1[i] <- abs_humidity(df_EC$Ta_1_1_1[i],df_EC$RH_1_1_1[i])
+}
+# Level 2, 5 m
+hum2 <- numeric()
+for (i in 1:nrow(df_EC)){
+  hum2[i] <- abs_humidity(df_EC$Ta_2_1_1[i],df_EC$RH_2_1_1[i])
+}
+# Level 3, 10 m
+hum3 <- numeric()
+for (i in 1:nrow(df_EC)){
+  hum3[i] <- abs_humidity(df_EC$Ta_3_1_1[i],df_EC$RH_3_1_1[i])
+}
+# Level 4, 15 m
+hum4 <- numeric()
+for (i in 1:nrow(df_EC)){
+  hum4[i] <- abs_humidity(df_EC$Ta_4_1_1[i],df_EC$RH_4_1_1[i])
+}
+# Level 5, 30.65 m
+hum5 <- numeric()
+for (i in 1:nrow(df_EC)){
+  hum5[i] <- abs_humidity(df_EC$Ta_5_1_1[i],df_EC$RH_5_1_1[i])
+}
+# Adding to df_EC
+df_EC <- cbind(df_EC,hum1,hum2,hum3,hum4,hum5)
+rm(hum1,hum2,hum3,hum4,hum5)
+
+# Calculating storage LE in canopy
+L_v = 2540000 # [J/kg]
+
+# Level 1, 2 m
+diff_hum1 <- numeric()
+#diff_hum1[1] <- NA # The first one should be NA because there is no data
+# before index 1
+for (i in 1:length(df_EC$hum1)){
+  diff_hum1[i] <- L_v * (df_EC$hum1[i] - df_EC$hum1[i-1])/(30 * 60)
+}
+
+# Level 2, 5 m
+diff_hum2 <- numeric()
+#diff_hum1[1] <- NA # The first one should be NA because there is no data
+# before index 1
+for (i in 1:length(df_EC$hum2)){
+  diff_hum2[i] <- L_v * (df_EC$hum2[i] - df_EC$hum2[i-1])/(30 * 60)
+}
+
+# Level 3, 10 m
+diff_hum3 <- numeric()
+#diff_hum1[1] <- NA # The first one should be NA because there is no data
+# before index 1
+for (i in 1:length(df_EC$hum3)){
+  diff_hum3[i] <- L_v * (df_EC$hum3[i] - df_EC$hum3[i-1])/(30 * 60)
+}
+
+# Level 4, 15 m
+diff_hum4 <- numeric()
+#diff_hum1[1] <- NA # The first one should be NA because there is no data
+# before index 1
+for (i in 1:length(df_EC$hum4)){
+  diff_hum4[i] <- L_v * (df_EC$hum4[i] - df_EC$hum4[i-1])/(30 * 60)
+}
+
+# Level 5, 30.65 or 30 m
+diff_hum5 <- numeric()
+#diff_hum1[1] <- NA # The first one should be NA because there is no data
+# before index 1
+for (i in 1:length(df_EC$hum5)){
+  diff_hum5[i] <- L_v * (df_EC$hum5[i] - df_EC$hum5[i-1])/(30 * 60)
+}
+
+# Integrating using the trapezium area rule
+LE_stor <- numeric()
+for (i in 1:nrow(df_EC)){
+  LE_stor[i] <- trapezium_intg(heights,diff_hum1[i],diff_hum2[i],diff_hum3[i],
+                               diff_hum4[i],diff_hum5[i])
+}
+
+# Adding to df_EC
+df_EC <- cbind(df_EC,LE_stor)
+rm(LE_stor,L_v,diff_hum1,diff_hum2,diff_hum3,diff_hum4,diff_hum5,heights,i)
 
 #### Exploratory plots ###################################
 
