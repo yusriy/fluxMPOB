@@ -7,6 +7,8 @@
 importData <- function(){
   library(gWidgets)
   options(guiToolkit = "tcltk")
+  #library(gWidgetsRGtk2)
+  #options(guiToolkit = 'RGtk2')
   
   # Create a window
   win <- gwindow("Import and Process Data in R", visible = FALSE)
@@ -28,10 +30,10 @@ importData <- function(){
   
   # Browse for EC data
   ec_label <- glabel('* Eddy covariance data', container = csv.frame_ec)
-  dest_ec <- gfilebrowse("Upload EC csv file", container = csv.frame_ec)
+  dest_ec <- gfilebrowse("Choose EC csv file", container = csv.frame_ec)
   
   # Create a subsection in window for Biomet
-  csv.frame_bio   <- gframe("Import Biomet data", container = win,
+  csv.frame_bio   <- gframe('Import Biomet data', container = win,
                             horizontal = FALSE)
   # Check box for file details EC
   check_bio <- gcheckbox('* Tick if header is present', 
@@ -45,7 +47,7 @@ importData <- function(){
   name_biomet <- gedit('df_biomet', container = csv.frame_bio)
   # Browse for Biomet data
   biomet_label <- glabel('* Biomet data', container = csv.frame_bio)
-  dest_biomet <- gfilebrowse('Upload Biomet csv file', 
+  dest_biomet <- gfilebrowse('Choose Biomet csv file', 
                              container = csv.frame_bio,
                              handler = function(h, ...) {
                              })
