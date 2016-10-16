@@ -10,6 +10,10 @@ importData <- function(){
   #library(gWidgetsRGtk2)
   #options(guiToolkit = 'RGtk2')
   
+  # Functions to process the data
+  source('R/tool_proc_datBio.R') # Biomet
+  source('R/tool_proc_datEC.R') # EC
+  
   # Create a window
   win <- gwindow("Import and Process Data in R", visible = FALSE)
   required_label <- glabel('* Required', container = win)
@@ -73,6 +77,10 @@ importData <- function(){
                               # Import EC data
                               df_ec <- read.csv(textConnection(df_ec),
                                                 header = svalue(check_ec))
+                              
+                              # Process EC data
+                              df_ec <- proc_datEC(df_ec)
+                              
                               # To rename the data frame to user specified name
                               do.call('<<-', list(svalue(name_ec), df_ec))
                               
@@ -94,6 +102,10 @@ importData <- function(){
                               # Import Biomet data
                               df_biomet <- read.csv(textConnection(df_biomet),
                                                     header = svalue(check_bio))
+                              
+                              # Process Biomet data
+                              df_biomet <- proc_datBio(df_biomet)
+                              
                               # To rename the data frame to user specified name
                               do.call('<<-', list(svalue(name_biomet), df_biomet))
                               
